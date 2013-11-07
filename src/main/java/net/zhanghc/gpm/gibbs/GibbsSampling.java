@@ -26,7 +26,11 @@ public abstract class GibbsSampling {
 		while((line = qr.readLine()) != null) {
 			Line l = gson.fromJson(line, Line.class);
 			
-			Document doc = createDocument(l, index);
+			Document doc = createDocument(l);
+			int i = 0;
+			for(String token : l.getTokens()) {
+				doc.set(i++, index.addWord(token));
+			}
 			documents.add(doc);
 		}
 		if(Verbose) {
@@ -36,18 +40,18 @@ public abstract class GibbsSampling {
 		qr.close();
 	}
 	
-	public abstract Document createDocument(Line line, WordIndex wordIndex);
+	public abstract Document createDocument(Line line);
 	
 	public int MaxIteration = 1000;
 	public boolean Verbose = false;
 	
 	public int DumpInterval = 100;
 	public String DumpPath = null;
-	public String DumpID = null;
 	
 	public void inference() {
 		initial();
 		Progress p = new Progress(MaxIteration, 1);
+		p.start();
 		for(int i = 0; i < MaxIteration; i++) {
 			if(Verbose) {
 	    		System.err.printf("Iteration %d... ", i);

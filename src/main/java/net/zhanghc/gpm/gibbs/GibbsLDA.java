@@ -1,54 +1,25 @@
 package net.zhanghc.gpm.gibbs;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-
-import org.tartarus.snowball.ext.EnglishStemmer;
 
 import net.zhanghc.gpm.data.Document;
 import net.zhanghc.gpm.data.Line;
 import net.zhanghc.gpm.data.SimpleDocument;
-import net.zhanghc.gpm.util.WordFilter;
-import net.zhanghc.gpm.util.WordIndex;
 import net.zhanghc.toolkit.io.QuickFileWriter;
 import net.zhanghc.toolkit.stat.Value;
 
 public final class GibbsLDA extends GibbsSampling {
-	private WordFilter filter = WordFilter.create(null, null);
-
-	public void setWordFilter(WordFilter filter) {
-		this.filter = filter;
-	}
 
 	@Override
-	public Document createDocument(Line line, WordIndex index) {
-		String text = line.getText();
-		String[] raw = text.split(" ");
-		List<String> words = new ArrayList<String>();
-
-		for(String s : raw) {
-			if(filter.accept(s)) {
-				words.add(s);
-			}
-		}
-
-		Document d = new SimpleDocument(line.toMeta(), words.size());
-		EnglishStemmer stemmer = new EnglishStemmer();
-		int i = 0;
-		for(String s : words) {
-			stemmer.setCurrent(s);
-			stemmer.stem();
-
-			d.set(i++, index.addWord(stemmer.getCurrent()));
-		}
-		return d;
+	public Document createDocument(Line line) {
+		return new SimpleDocument(line.toMeta(), line.getTokens().size());
 	}
 
 	public int Topic = 20;
 	public double Alpha = 50.0 / Topic;
 	public double Beta = 0.1;
+	public int TopNWord = 20;
 
 	private int [][] z; //topic label array
 
@@ -144,12 +115,12 @@ public final class GibbsLDA extends GibbsSampling {
 
 	@Override
 	protected void export(int iter, String path) throws IOException {
-		export(String.format("%s/iter_%d.theta", path, iter), String.format("%s/iter_%d.phi", path, iter), 20);
+		export(String.format("%s/iter_%d.theta", path, iter), String.format("%s/iter_%d.phi", path, iter), TopNWord);
 	}
 
 	@Override
 	public void export(String path, String name) throws IOException {
-		export(String.format("%s/%s.theta", path, name), String.format("%s/%s.phi", path, name), 20);
+		export(String.format("%s/%s.theta", path, name), String.format("%s/%s.phi", path, name), TopNWord);
 
 	}
 

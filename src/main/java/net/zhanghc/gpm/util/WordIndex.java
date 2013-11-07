@@ -38,5 +38,13 @@ public class WordIndex {
 			return index.get(i);
 		}
 	}
+	
+	public int lookup(String token) {
+		if(inverseIndex.containsKey(token)) {
+			return inverseIndex.get(token);
+		} else {
+			return -1;
+		}
+	}
 
 }
