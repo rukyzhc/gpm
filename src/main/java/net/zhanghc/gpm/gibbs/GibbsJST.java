@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.zhanghc.toolkit.stat.Value;
 import net.zhanghc.gpm.data.Document;
 import net.zhanghc.gpm.data.Line;
 import net.zhanghc.gpm.data.SimpleDocument;
+import net.zhanghc.toolkit.stat.Value;
 import net.zhanghc.toolkit.io.QuickFileWriter;
 
 public class GibbsJST extends GibbsSampling {

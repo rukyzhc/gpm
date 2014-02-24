@@ -6,8 +6,8 @@ import java.util.Map;
 import net.zhanghc.gpm.data.Document;
 import net.zhanghc.gpm.data.Line;
 import net.zhanghc.gpm.data.SimpleDocument;
-import net.zhanghc.toolkit.io.QuickFileWriter;
 import net.zhanghc.toolkit.stat.Value;
+import net.zhanghc.toolkit.io.QuickFileWriter;
 
 public final class GibbsLDA extends GibbsSampling {
 
