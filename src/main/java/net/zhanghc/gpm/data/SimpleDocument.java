@@ -1,15 +1,16 @@
 package net.zhanghc.gpm.data;
 
 public class SimpleDocument extends Document {
-	protected String tag;
+	protected String id;
 
 	public SimpleDocument(String tag, int size) {
 		super(size);
-		this.tag = tag;
+		this.id = tag;
 	}
-	
-	public String getTag() {
-		return tag;
+
+	@Override
+	public String getDocID() {
+		return id;
 	}
 
 }

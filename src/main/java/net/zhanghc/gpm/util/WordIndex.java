@@ -5,18 +5,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.zhanghc.toolkit.stat.Counter;
+
 public class WordIndex {
 	Map<String, Integer> inverseIndex;
+	Counter<String> wordFreq;
 	List<String> index;
 
 	public WordIndex() {
 		inverseIndex = new HashMap<String, Integer>();
 		index = new ArrayList<String>();
+		wordFreq = new Counter<String>();
 	}
 
 	public int addWord(String word) {
 		String w = word.toLowerCase();
 
+		wordFreq.count(word);
 		if(inverseIndex.containsKey(w)) {
 			return inverseIndex.get(w);
 		} else {
@@ -25,6 +30,14 @@ public class WordIndex {
 			inverseIndex.put(w, ni);
 			return ni;
 		}
+	}
+	
+	public int frequency(String w) {
+		return wordFreq.result(w);
+	}
+	
+	public int frequency(int i) {
+		return wordFreq.result(index.get(i));
 	}
 
 	public int size() {

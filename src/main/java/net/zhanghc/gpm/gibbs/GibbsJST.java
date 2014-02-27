@@ -16,7 +16,7 @@ public class GibbsJST extends GibbsSampling {
 	
 	public void setPrior(String token, int priorSentiLabel) {
 		Prior = true;
-		lexicon.put(index.addWord(token), priorSentiLabel);
+		lexicon.put(wrdIndex.addWord(token), priorSentiLabel);
 	}
 
 	@Override
@@ -51,7 +51,7 @@ public class GibbsJST extends GibbsSampling {
 	
 	@Override
 	public void initial() {
-		V = index.size();
+		V = wrdIndex.size();
 		M = documents.size();
 
 		N_ijk = new int[V][T][S];
@@ -165,7 +165,7 @@ public class GibbsJST extends GibbsSampling {
 				
 				Value<String> value = new Value<String>();
 				for(int v = 0; v < V; v++) {
-					value.record(index.lookup(v), phi[v][j][k]);
+					value.record(wrdIndex.lookup(v), phi[v][j][k]);
 				}
 				int c = 0;
 				for(Map.Entry<String, Double> entry : value.sortedValues(true)) {
@@ -181,7 +181,7 @@ public class GibbsJST extends GibbsSampling {
 
 		QuickFileWriter tsd = new QuickFileWriter(thetaName, "utf-8");
 		for(int m = 0; m < M; m++) {
-			tsd.printf("[%s]", ((SimpleDocument)documents.get(m)).getTag());
+			tsd.printf("[%s]", documents.get(m).getDocID());
 			for(int j = 0; j < T; j++) {
 				for(int k = 0; k < S; k++) {
 					tsd.printf("\t[%d|%d:%.3e]", j, k, theta[j][k][m]);
@@ -193,7 +193,7 @@ public class GibbsJST extends GibbsSampling {
 		
 		QuickFileWriter kd = new QuickFileWriter(piName, "utf-8");
 		for(int m = 0; m < M; m++) {
-			kd.printf("[%s]", ((SimpleDocument)documents.get(m)).getTag());
+			kd.printf("[%s]", documents.get(m).getDocID());
 			for(int k = 0; k < S; k++) {
 				kd.printf("\t[%d:%.3e]", k, pi[k][m]);
 			}

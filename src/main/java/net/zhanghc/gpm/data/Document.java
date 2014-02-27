@@ -2,6 +2,8 @@ package net.zhanghc.gpm.data;
 
 public abstract class Document {
 	int[] words;
+	
+	public abstract String getDocID();
 
 	public Document(int size) {
 		this.words = new int[size];

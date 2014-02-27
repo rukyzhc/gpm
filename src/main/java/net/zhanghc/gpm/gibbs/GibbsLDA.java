@@ -1,6 +1,7 @@
 package net.zhanghc.gpm.gibbs;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 import net.zhanghc.gpm.data.Document;
@@ -9,11 +10,31 @@ import net.zhanghc.gpm.data.SimpleDocument;
 import net.zhanghc.toolkit.stat.Value;
 import net.zhanghc.toolkit.io.QuickFileWriter;
 
+/**
+ * 
+ * Procedure:
+ * 1. load file
+ * 2. prior setting*
+ * 3. initial
+ * 4. pseudo count setting*
+ * 5. inference
+ * 6. parameter
+ * 7. export
+ * 
+ * @author zhanghc
+ *
+ */
 public final class GibbsLDA extends GibbsSampling {
 
 	@Override
 	public Document createDocument(Line line) {
 		return new SimpleDocument(line.toMeta(), line.getTokens().size());
+	}
+	
+	Map<Integer, Integer> prior = new HashMap<Integer, Integer>();
+	
+	public void setPrior(String token, int priorTopic) {
+		prior.put(wrdIndex.addWord(token), priorTopic);
 	}
 
 	public int Topic = 20;
@@ -35,7 +56,7 @@ public final class GibbsLDA extends GibbsSampling {
 
 	@Override
 	public void initial() {
-		V = index.size();
+		V = wrdIndex.size();
 		M = documents.size();
 		T = Topic;
 
@@ -48,22 +69,70 @@ public final class GibbsLDA extends GibbsSampling {
 
 		//initialize topic lable z for each word  
 		z = new int[M][];  
-		for(int m = 0; m < M; m++){  
-			int N = documents.get(m).getWords().length;  
+		for(int m = 0; m < M; m++){
+			int[] words = documents.get(m).getWords();
+			int N = words.length;  
 			z[m] = new int[N];  
-			for(int n = 0; n < N; n++){  
-				int initTopic = (int)(Math.random() * T);// From 0 to K - 1  
-				z[m][n] = initTopic;  
+			for(int n = 0; n < N; n++){
+				int wi = words[n];
+				
+				int initTopic = prior.containsKey(wi) ? prior.get(wi) : (int)(Math.random() * T);// From 0 to K - 1  
+				z[m][n] = initTopic;
 				//number of words in doc m assigned to topic initTopic add 1  
 				N_mk[m][initTopic]++;  
 				//number of terms doc[m][n] assigned to topic initTopic add 1  
-				N_kt[initTopic][documents.get(m).getWords()[n]]++;
+				N_kt[initTopic][wi]++;
 				// total number of words assigned to topic initTopic add 1  
 				N_k[initTopic]++;  
 			}  
 			// total number of words in document m is N  
 			N_m[m] = N;  
 		}
+	}
+	
+	public double[] getTheta(String id) {
+		return theta[docIndex.get(id)];
+	}
+	
+	public double[] getTheta(int idx) {
+		return theta[idx];
+	}
+	
+	public int estimateTopic(String docID) {
+		return estimateTopic(docIndex.get(docID));
+	}
+	
+	public int docIDtoIndex(String id) {
+		return docIndex.get(id);
+	}
+	
+	public int estimateTopic(int id) {
+		double max = Double.MIN_VALUE;
+		int ret = -1;
+		for(int k = 0; k < Topic; k++) {
+			if(theta[id][k] > max) {
+				max = theta[id][k];
+				ret = k;
+			}
+		}
+		return ret;
+	}
+	
+	public boolean pseudoCount(String word, int c, int t) {
+		int w = wrdIndex.lookup(word);
+		
+		if(w < 0) {
+			return false;
+		}
+		
+		for(int k = 0; k < Topic; k++) {
+			N_k[k] -= N_kt[k][w];
+			N_kt[k][w] = 0;
+		}
+		
+		N_k[t] += c;
+		N_kt[t][w] = c;
+		return true;
 	}
 
 	@Override
@@ -125,13 +194,13 @@ public final class GibbsLDA extends GibbsSampling {
 	}
 
 	private void export(String thetaName, String phiName, int maxWordPerTopic) throws IOException {
-		QuickFileWriter t = new QuickFileWriter(thetaName, "utf-8");
+		QuickFileWriter t = new QuickFileWriter(phiName, "utf-8");
 		for(int k = 0; k < T; k++) {
 			t.printf("[Topic%d]", k);
 
 			Value<String> value = new Value<String>();
 			for(int m = 0; m < V; m++) {
-				value.record(index.lookup(m), phi[k][m]);
+				value.record(wrdIndex.lookup(m), phi[k][m]);
 			}
 			int c = 0;
 			for(Map.Entry<String, Double> entry : value.sortedValues(true)) {
@@ -144,9 +213,9 @@ public final class GibbsLDA extends GibbsSampling {
 		}
 		t.close();
 
-		QuickFileWriter p = new QuickFileWriter(phiName, "utf-8");
+		QuickFileWriter p = new QuickFileWriter(thetaName, "utf-8");
 		for(int m = 0; m < M; m++) {
-			p.printf("[%s]", ((SimpleDocument)documents.get(m)).getTag());
+			p.printf("[%s]", documents.get(m).getDocID());
 			for(int k = 0; k < T; k++) {
 				p.printf("\t[%d:%.3e]", k, theta[m][k]);
 			}
